@@ -1,0 +1,9 @@
+pip~=20.2.3
+setuptools~=49.2.1
+pyyaml==5.3.1
+requests~=2.26.0
+GitPython
+flask~=2.0.1
+Flask
+waitress~=2.0.0
+django-request~=1.5.6

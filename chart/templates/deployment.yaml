@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: version-bump
+  labels:
+    app: version-bump
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: version-bump
+  template:
+    metadata:
+      labels:
+        app: version-bump
+    spec:
+      containers:
+        - name: version-bump
+          image: Javid907/github-bump-version-bot:0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000        
+          volumeMounts:
+            - name: version-bump-config
+              mountPath: /etc/version-bump/config.yaml
+              subPath: config.yaml
+        - name: version-bump-config
+          configMap:
+            name: version-bump-configmap
+            items:
+              - key: config.yaml
+                path: config.yaml

@@ -1,0 +1,4 @@
+token: your_bot_token
+bot_username: your_bot_username
+hosting: github #you must choose `github` or `gitlab`
+host: gitlab.com # it needs only if you choose gitlab in hosting

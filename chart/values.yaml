@@ -1,0 +1,7 @@
+myConfig: |
+  github_token: bot_token
+  bot_username: bot_username
+  merge_function: True
+  repository:
+    - test/repo1
+    - test/repo2
