@@ -1,82 +1,59 @@
 import requests
 import json
-from collections import Counter
 
 
-def get_repo_url(access_token, github_repo):
-    query_url = f"https://api.github.com/repos/{github_repo}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    response = data['clone_url']
+def get_repo_url(access_token, request_data):
+    response = request_data['repository']['clone_url']
     replace = f'https://{access_token}:x-oauth-basic@'
     final = response.replace("https://", replace)
     return final
 
 
-def get_repo_ssh_url(access_token, github_repo):
-    query_url = f"https://api.github.com/repos/{github_repo}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    return data['ssh_url']
-
-
-def get_count_pull_request(access_token, github_repo):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    try:
-        return data[0]['number']
-    except:
+def get_assigner_pull_request(request_data, bot_username):
+    if request_data['action'] == 'assigned':
+        if request_data['pull_request']['assignee']['login'] == bot_username:
+            return request_data['number']
+        else:
+            return False
+    else:
         return False
 
 
-def get_assigner_pull_request(access_token, github_repo, bot_username):
-    count = get_count_pull_request(access_token, github_repo)
-    for i in range(1, count + 1):
-        query_url = f"https://api.github.com/repos/{github_repo}/pulls/{i}"
-        headers = {'Authorization': f'token {access_token}'}
-        r = requests.get(query_url, headers=headers)
-        data = r.json()
-        try:
-            user = data['assignee']['login']
-            if user == bot_username:
-                return i
-                break
-        except:
-            pass
-
-
-def get_branch_name(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    branch = data['head']['ref']
-    return branch
-
-
-def get_owner(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    owner = data['user']['login']
-    return owner
-
-
-def get_state(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    state = data['state']
+def get_state(request_data):
+    state = request_data['pull_request']['state']
     if state == 'open':
         return True
     else:
         return False
+
+
+def get_rebase_status(request_data):
+    mergeable = request_data['pull_request']['mergeable']
+    rebaseable = request_data['pull_request']['rebaseable']
+    if rebaseable == True and mergeable == True:
+        return True
+    elif rebaseable == True and mergeable == False:
+        return False
+    elif rebaseable == False and mergeable == False:
+        return False
+    elif rebaseable == False and mergeable == False:
+        return False
+    else:
+        return False
+
+
+def get_draft(request_data):
+    if request_data['pull_request']['mergeable_state'] == 'draft':
+        return False
+    else:
+        return True
+
+
+def get_action_state(request_data):
+    if request_data['pull_request']['mergeable_state'] == 'unstable':
+        return False
+    else:
+        return True
 
 
 def get_review(access_token, github_repo, pull_request_id):
@@ -91,61 +68,6 @@ def get_review(access_token, github_repo, pull_request_id):
         else:
             return False
     except:
-        return False
-
-
-def get_draft(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    draft = data['mergeable_state']
-    if draft == 'draft':
-        return False
-    else:
-        return True
-
-
-def get_action_state(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    action_state = data['mergeable_state']
-    if action_state == 'unstable':
-        return False
-    else:
-        return True
-
-
-def get_rebaseable(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    return data['rebaseable']
-
-
-def get_mergeable(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}"
-    headers = {'Authorization': f'token {access_token}'}
-    r = requests.get(query_url, headers=headers)
-    data = r.json()
-    return data['mergeable']
-
-
-def get_rebase_status(access_token, github_repo, pull_request_id):
-    mergeable = get_mergeable(access_token, github_repo, pull_request_id)
-    rebaseable = get_rebaseable(access_token, github_repo, pull_request_id)
-    if rebaseable == True and mergeable == True:
-        return True
-    elif rebaseable == True and mergeable == False:
-        return False
-    elif rebaseable == False and mergeable == False:
-        return False
-    elif rebaseable == False and mergeable == False:
-        return False
-    else:
         return False
 
 
@@ -164,8 +86,8 @@ def merge_pull_request(access_token, github_repo, pull_request_id):
         return False
 
 
-def re_assigne_owner(access_token, github_repo, pull_request_id, bot_username):
-    owner = get_owner(access_token, github_repo, pull_request_id)
+def re_assigne_owner(access_token, github_repo, pull_request_id, bot_username, request_data):
+    owner = request_data['pull_request']['user']['login']
     try:
         query_url = f"https://api.github.com/repos/{github_repo}/issues/{pull_request_id}/assignees"
         headers = {'Authorization': f'token {access_token}'}

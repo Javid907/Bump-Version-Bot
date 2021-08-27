@@ -1,3 +1,4 @@
+import json
 from flask import Flask, request
 from bot import config, github, env, gitlab, bump
 from waitress import serve
@@ -16,30 +17,34 @@ def bot_bump_version():
         repo = request.args.get('repo_name')
 
         if hosting == "github":
-            pull_request_id = github.get_assigner_pull_request(token, repo, bot_username)
-            url = github.get_repo_url(token, repo)
-            branch = github.get_branch_name(token, repo, pull_request_id)
-            pull_request_url = f"https://github.com/{repo}/pull/{pull_request_id}"
+            request_data = json.loads(request.data)
+            url = github.get_repo_url(token, request_data)
+            branch = request_data['pull_request']['head']['ref']
+            pull_request_url = request_data['pull_request']['html_url']
+            pull_request_id = github.get_assigner_pull_request(request_data, bot_username)
 
-            if not github.get_state(token, repo, pull_request_id):
-                github.re_assigne_owner(token, repo, pull_request_id, bot_username)
+            if not pull_request_id:
+                return str("This PR was not assigned to bot " + pull_request_url), 405
+
+            if not github.get_state(request_data):
+                github.re_assigne_owner(token, repo, pull_request_id, bot_username, request_data)
                 return str("This Pull Request is close " + pull_request_url), 405
 
-            if not github.get_rebase_status(token, repo, pull_request_id):
-                github.re_assigne_owner(token, repo, pull_request_id, bot_username)
+            if not github.get_rebase_status(request_data):
+                github.re_assigne_owner(token, repo, pull_request_id, bot_username, request_data)
                 return str("Rebase need " + pull_request_url), 405
 
-            if not github.get_draft(token, repo, pull_request_id):
-                github.re_assigne_owner(token, repo, pull_request_id, bot_username)
+            if not github.get_draft(request_data):
+                github.re_assigne_owner(token, repo, pull_request_id, bot_username, request_data)
                 return str("This is a draft Pull Request " + pull_request_url), 405
 
-            if not github.get_review(token, repo, pull_request_id):
-                github.re_assigne_owner(token, repo, pull_request_id, bot_username)
-                return str("This Pull Request was not approved " + pull_request_url), 405
-
-            if not github.get_action_state(token, repo, pull_request_id):
-                github.re_assigne_owner(token, repo, pull_request_id, bot_username)
+            if not github.get_action_state(request_data):
+                github.re_assigne_owner(token, repo, pull_request_id, bot_username, request_data)
                 return str("Action is red " + pull_request_url), 405
+
+            if not github.get_review(token, repo, pull_request_id):
+                github.re_assigne_owner(token, repo, pull_request_id, bot_username, request_data)
+                return str("This Pull Request was not approved " + pull_request_url), 405
 
         elif hosting == "gitlab":
             url = gitlab.get_repo_url(token, repo, host)
@@ -64,7 +69,7 @@ def bot_bump_version():
                 gitlab.assignee_to_user(url, assignee_mr_url, token)
                 return str("This Pull Request was not approved " + pull_request_url), 405
 
-            if gitlab.get_status_pipeline(url, project_name, assignee_mr_url, token):
+            if gitlab.get_status_pipeline(url, repo, assignee_mr_url, token):
                 gitlab.assignee_to_user(url, assignee_mr_url, token)
                 return str("Pipeline is red " + assignee_mr_url), 405
 
@@ -75,13 +80,14 @@ def bot_bump_version():
         push = bump.bump_version(url, branch, old_version, new_version, microservice_type)
 
         if hosting == "github":
-            github.re_assigne_owner(token, repo, pull_request_id, bot_username)
+            github.re_assigne_owner(token, repo, pull_request_id, bot_username, request_data)
         elif hosting == "gitlab":
             gitlab.assignee_to_user(url, assignee_mr_url, token)
 
         if request.args.get('merge'):
-            if not github.merge_pull_request(token, repo, pull_request_id):
-                return str("Could not merge " + assignee_mr_url), 405
+            if hosting == "github":
+                if not github.merge_pull_request(token, repo, pull_request_id):
+                    return str("Could not merge " + assignee_mr_url), 405
 
         return str(push), 200
     except Exception as error:
