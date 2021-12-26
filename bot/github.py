@@ -9,35 +9,22 @@ def get_repo_url(access_token, request_data):
     return final
 
 
-def get_assigner_pull_request(request_data, bot_username):
-    if request_data['action'] == 'assigned':
-        if request_data['pull_request']['assignee']['login'] == bot_username:
-            return request_data['number']
+def check_pull_request(request_data, username):
+    try:
+        if request_data['pull_request']['assignee']['login'] == username:
+            return True
+    except:
+        if username in request_data['comment']['body']:
+            return True
         else:
             return False
-    else:
-        return False
 
 
 def get_state(request_data):
-    state = request_data['pull_request']['state']
-    if state == 'open':
+    if request_data['pull_request']['state'] == 'open':
         return True
-    else:
-        return False
-
-
-def get_rebase_status(request_data):
-    mergeable = request_data['pull_request']['mergeable']
-    rebaseable = request_data['pull_request']['rebaseable']
-    if rebaseable == True and mergeable == True:
+    elif request_data['issue']['state'] == 'open':
         return True
-    elif rebaseable == True and mergeable == False:
-        return False
-    elif rebaseable == False and mergeable == False:
-        return False
-    elif rebaseable == False and mergeable == False:
-        return False
     else:
         return False
 
@@ -57,44 +44,59 @@ def get_action_state(request_data):
 
 
 def get_review(access_token, github_repo, pull_request_id):
-    query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}/reviews"
-    headers = {'Authorization': f'token {access_token}'}
+    query_url = "https://api.github.com/repos/{}/pulls/{}/reviews".format(github_repo, pull_request_id)
+    headers = {'Authorization': "token {}".format(access_token)}
     r = requests.get(query_url, headers=headers)
     data = r.json()
-    try:
-        for i in range(len(data) + 1):
-            if data[i]['state'] == 'APPROVED':
-                return True
-        else:
-            return False
-    except:
-        return False
-
-
-def merge_pull_request(access_token, github_repo, pull_request_id):
-    try:
-        query_url = f"https://api.github.com/repos/{github_repo}/pulls/{pull_request_id}/merge"
-        headers = {'Authorization': f'token {access_token}'}
-        data = {"merge_method": "rebase"}
-        r = requests.put(query_url, data=json.dumps(data), headers=headers)
-        data = r.json()
-        if data['merged']:
+    for i in range(50):
+        if data[i]['state'] == 'APPROVED':
             return True
-        else:
-            return False
-    except:
+    else:
         return False
 
 
-def re_assigne_owner(access_token, github_repo, pull_request_id, bot_username, request_data):
-    owner = request_data['pull_request']['user']['login']
+def re_assigne_owner(access_token, github_repo, pull_request_id, username, owner):
     try:
-        query_url = f"https://api.github.com/repos/{github_repo}/issues/{pull_request_id}/assignees"
-        headers = {'Authorization': f'token {access_token}'}
-        data = {"assignees": [bot_username]}
+        query_url = "https://api.github.com/repos/{}/issues/{}/assignees".format(github_repo, pull_request_id)
+        headers = {'Authorization': "token {}".format(access_token)}
+        data = {"assignees": [username]}
         requests.delete(query_url, data=json.dumps(data), headers=headers)
         data = {"assignees": [owner]}
         requests.post(query_url, data=json.dumps(data), headers=headers)
         return True
-    except:
+    except Exception as error:
+        return error
+
+
+def merge_pull_request(access_token, github_repo, pull_request_id):
+    query_url = "https://api.github.com/repos/{}/pulls/{}/merge".format(github_repo, pull_request_id)
+    headers = {'Authorization': "token {}".format(access_token)}
+    data = {"merge_method": "rebase"}
+    r = requests.put(query_url, data=json.dumps(data), headers=headers)
+    data = r.json()
+    if data['merged']:
+        return True
+    else:
         return False
+
+
+def get_branch_name(access_token, github_repo, pull_request_id):
+    try:
+        query_url = "https://api.github.com/repos/{}/pulls/{}".format(github_repo, pull_request_id)
+        headers = {'Authorization': "token {}".format(access_token)}
+        r = requests.get(query_url, headers=headers)
+        data = r.json()
+        return data['head']['ref']
+    except Exception as error:
+        return error
+
+
+def send_answer(access_token, github_repo, pull_request_id, body):
+    try:
+        query_url = "https://api.github.com/repos/{}/issues/{}/comments".format(github_repo, pull_request_id)
+        headers = {'Authorization': "token {}".format(access_token)}
+        data = {"body": body}
+        requests.post(query_url, data=json.dumps(data), headers=headers)
+        return True
+    except Exception as error:
+        return error

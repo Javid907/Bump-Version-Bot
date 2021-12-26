@@ -1,7 +1,7 @@
 .github
 config/config_test.yaml
-test.py
+test/
 venv
 .idea
 deployment.yaml
-chart
+chart/

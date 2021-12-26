@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: version-bump
+  name: {{ .Values.app.name }}
   labels:
-    app: version-bump
+    app: {{ .Values.app.name }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.app.replicas }}
   revisionHistoryLimit: 10
   strategy:
     rollingUpdate:
@@ -14,25 +14,26 @@ spec:
   minReadySeconds: 5
   selector:
     matchLabels:
-      app: version-bump
+      app: {{ .Values.app.name }}
   template:
     metadata:
       labels:
-        app: version-bump
+        app: {{ .Values.app.name }}
     spec:
       containers:
-        - name: version-bump
-          image: Javid907/github-bump-version-bot:0.1.0
-          imagePullPolicy: Always
+        - name: {{ .Values.app.name }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
           ports:
-            - containerPort: 5000        
+            - containerPort: {{ .Values.app.port }}
           volumeMounts:
-            - name: version-bump-config
+            - name: {{ .Values.app.name }}-config
               mountPath: /etc/version-bump/config.yaml
               subPath: config.yaml
-        - name: version-bump-config
+      volumes:
+        - name: {{ .Values.app.name }}-config
           configMap:
-            name: version-bump-configmap
+            name: {{ .Values.app.name }}-configmap
             items:
               - key: config.yaml
                 path: config.yaml

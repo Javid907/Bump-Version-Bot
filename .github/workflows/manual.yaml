@@ -1,8 +1,6 @@
-name: Run Build and Push Image
+name: Run Build and Push Latest Image
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 jobs:
   build-push-image:
     name: Build-Push Image
@@ -18,17 +16,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Get tag for image
-        run: |-
-          echo "IMAGE_TAG=$(cat ./setup.py | grep "version=" | head -n 1 | sed 's/[^0-9.]*//g')" >> $GITHUB_ENV
-
       - name: Build Docker Image
         run: |-
-          docker build --tag javid907/bump-version-bot:${{ env.IMAGE_TAG }} . --file Dockerfile
-
+          docker build --tag javid907/bump-version-bot:latest . --file Dockerfile
       - name: Push image to Docker Global repo
         run: |-
-          docker push javid907/bump-version-bot:${{ env.IMAGE_TAG }}
-
+          docker push javid907/bump-version-bot:latest
       - name: Lint Chart Helm
         run: helm lint ./chart/

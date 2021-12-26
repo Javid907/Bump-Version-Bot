@@ -2,83 +2,80 @@ import requests
 import json
 
 
-def get_ssh_url(gitlab_access_token, project_name, host):
-    url = 'https://{}/api/v4/projects?search={}'.format(host, project_name)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    json_format = json.loads(response.text)
-    count = 0
-    for i in json_format:
-        if json_format[count]['path'] == project_name:
-            return json_format[count]['ssh_url_to_repo']
-            break
-        count += 1
+def get_repo_url(access_token, request_data):
+    response = request_data['project']['http_url']
+    replace = f'https://oauth2:{access_token}@'
+    final = response.replace("https://", replace)
+    return final
 
 
-def get_ssh_url(gitlab_access_token, project_name, host):
-    url = 'https://{}/api/v4/projects?search={}'.format(host, project_name)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    json_format = json.loads(response.text)
-    count = 0
-    for i in json_format:
-        if json_format[count]['path'] == project_name:
-            return json_format[count]['ssh_url_to_repo']
-            break
-        count += 1
+def object_kind(request_data):
+    if request_data['object_kind'] == "merge_request":
+        return "merge_request"
+    elif request_data['object_kind'] == "note":
+        return "note"
+    else:
+        return False
 
 
-def get_project_id(gitlab_access_token, project_name, host):
-    url = 'https://{}/api/v4/projects?search={}'.format(host, project_name)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    json_format = json.loads(response.text)
-    count = 0
-    for i in json_format:
-        if json_format[count]['path'] == project_name:
-            return json_format[count]['id']
-            break
-        count += 1
+def get_assigne_mr_id(request_data, username):
+    try:
+        if request_data['assignees'][0]['username'] == username:
+            return request_data['object_attributes']['iid']
+        else:
+            return False
+    except:
+        return False
 
 
-def get_merge_request_url(gitlab_access_token, project_name, host):
-    url = 'https://{}/api/v4/projects?search={}'.format(host, project_name)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    json_format = json.loads(response.text)
-    count = 0
-    for i in json_format:
-        if json_format[count]['path'] == project_name:
-            return json_format[count]['_links']['merge_requests']
-            break
-        count += 1
+def get_note_mr_id(request_data, username):
+    try:
+        if username in request_data['object_attributes']['note']:
+            return request_data['merge_request']['iid']
+        else:
+            return False
+    except:
+        return False
 
 
-def get_assignee_mr_url(gitlab_access_token, project_name, host):
-    default_mr_url = get_merge_request_url(host, project_name, gitlab_access_token)
-    url = '{}?state=opened'.format(default_mr_url)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
+def get_merge_status(request_data, object_kind):
+    if object_kind == "note":
+        if request_data['merge_request']['merge_status'] == "can_be_merged":
+            return True
+        else:
+            return False
+    elif object_kind == "merge_request":
+        if request_data['object_attributes']['merge_status'] == "can_be_merged":
+            return True
+        else:
+            return False
+
+
+def re_assigne_owner(full_mr_url, gitlab_access_token, request_data):
+    user_id = request_data['user']['id']
+    headers = {"content-type": "application/json", 'PRIVATE-TOKEN': gitlab_access_token}
+    data = {"assignee_ids": [user_id]}
+    requests.put(full_mr_url, headers=headers, data=json.dumps(data))
+
+
+def get_thread_status(full_mr_url, gitlab_access_token):
+    response = requests.get(full_mr_url + "/discussions", headers={'PRIVATE-TOKEN': gitlab_access_token})
     response_json_format = json.loads(response.text)
-    if response_json_format is not None:
-        json_file_count = len(response_json_format)
-        for i in range(json_file_count):
-            assignee = response_json_format[i]['assignee']
-            if assignee is not None:
-                username = assignee['username']
-                if username == 'scp-gitlab-merge-bot':
-                    merge_request_id = response_json_format[i]['iid']
-                    full_merge_request_url = '{}/{}'.format(default_mr_url, merge_request_id)
-                    return full_merge_request_url
+    for i in response_json_format:
+        if i["notes"][0]["resolvable"]:
+            if i["notes"][0]["resolved"]:
+                return True
+            else:
+                return False
 
 
-def get_assignee_mr_id(gitlab_access_token, full_mr_url):
-    response = requests.get(full_mr_url, headers={'PRIVATE-TOKEN': gitlab_access_token})
+def get_status_pipeline(full_mr_url, gitlab_access_token):
+    response = requests.get(full_mr_url + "/pipelines", headers={'PRIVATE-TOKEN': gitlab_access_token})
     response_json_format = json.loads(response.text)
-    return response_json_format['iid']
-
-
-def get_branch_of_merge_request(gitlab_access_token, full_mr_url):
-    if full_mr_url is not None:
-        response = requests.get(full_mr_url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-        response_json_format = json.loads(response.text)
-        source_branch = response_json_format['source_branch']
-        return source_branch
+    if response_json_format[-1]['status'] == "success":
+        return True
+    else:
+        return False
 
 
 def get_approvals_count(full_mr_url, gitlab_access_token):
@@ -92,61 +89,6 @@ def get_approvals_count(full_mr_url, gitlab_access_token):
     return count
 
 
-def get_status_pipeline(host, project_name, full_mr_url, gitlab_access_token):
-    project_id = get_project_id(host, project_name, gitlab_access_token)
-    merge_request_id = get_assignee_mr_id(full_mr_url, gitlab_access_token)
-    ref_name = 'refs/merge-requests/{}/head'.format(merge_request_id)
-    url = 'https://{}/api/v4/projects/{}/pipelines?ref={}'.format(host, project_id, ref_name)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    response_json_format = json.loads(response.text)
-    return response_json_format[0]['status']
-
-
-def get_username_of_mr_author(full_mr_url, gitlab_access_token):
-    response = requests.get(full_mr_url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    response_json_format = json.loads(response.text)
-    return response_json_format['author']['username']
-
-
-def get_id_of_user(host, full_mr_url, gitlab_access_token):
-    username = get_username_of_mr_author(full_mr_url, gitlab_access_token)
-    url = 'https://{}/api/v4/users?username={}'.format(host, username)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    response_json_format = json.loads(response.text)
-    return response_json_format[0]['id']
-
-
-def get_email_of_user(host, full_mr_url, gitlab_access_token):
-    user_id = get_id_of_user(host, full_mr_url, gitlab_access_token)
-    url = 'https://{}/api/v4/users/{}'.format(host, user_id)
-    response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    response_json_format = json.loads(response.text)
-    return response_json_format['public_email']
-
-
-def assignee_to_user(host, full_mr_url, gitlab_access_token):
-    user_id = get_id_of_user(host, full_mr_url, gitlab_access_token)
-    headers = {"content-type": "application/json", 'PRIVATE-TOKEN': gitlab_access_token}
-    data = {"assignee_ids": [user_id]}
-    requests.put(full_mr_url, headers=headers, data=json.dumps(data))
-
-
-def get_http_mr_url(full_mr_url, gitlab_access_token):
-    response = requests.get(full_mr_url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-    response_json_format = json.loads(response.text)
-    return response_json_format['web_url']
-
-
-def merge_assigner_mr(full_mr_url, gitlab_access_token):
-    try:
-        url = "{}/merge".format(full_mr_url)
-        headers = {'PRIVATE-TOKEN': gitlab_access_token}
-        requests.put(url, headers=headers)
-        return "success"
-    except:
-        return "failed"
-
-
 def get_list_of_approved_username(full_mr_url, gitlab_access_token):
     count = get_approvals_count(full_mr_url, gitlab_access_token)
     my_list = []
@@ -158,40 +100,27 @@ def get_list_of_approved_username(full_mr_url, gitlab_access_token):
     return my_list
 
 
-def get_list_of_approved_email(host, full_mr_url, gitlab_access_token):
-    username_list = get_list_of_approved_username(full_mr_url, gitlab_access_token)
-    email_list = []
-    for username in username_list:
-        url = 'https://{}/api/v4/users?username={}'.format(host, username)
-        response = requests.get(url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-        response_json_format = json.loads(response.text)
-        username_id = response_json_format[0]['id']
-
-        new_url = 'https://{}/api/v4/users/{}'.format(host, username_id)
-        new_response = requests.get(new_url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-        new_response_json_format = json.loads(new_response.text)
-        email_list.append(new_response_json_format['public_email'])
-    return email_list
-
-
-def check_who_approved(full_mr_url, gitlab_access_token):
-    username_list = get_list_of_approved_username(full_mr_url, gitlab_access_token)
-    username = get_username_of_mr_author(full_mr_url, gitlab_access_token)
-    for i in username_list:
-        if i == username:
-            return "failed"
+def check_who_approved(full_mr_url, gitlab_access_token, request_data):
+    list_of_approved_username = get_list_of_approved_username(full_mr_url, gitlab_access_token)
+    owner = request_data['user']['username']
+    for i in list_of_approved_username:
+        if i == owner:
+            return False
         else:
-            return "success"
+            return True
 
 
-def get_thread_status(full_mr_url, gitlab_access_token):
+def send_answer(full_mr_url, gitlab_access_token, message):
+    headers = {"content-type": "application/json", 'PRIVATE-TOKEN': gitlab_access_token}
+    data = {"body": message}
+    requests.post(full_mr_url + "/notes", headers=headers, data=json.dumps(data))
+
+
+def merge_request(full_mr_url, gitlab_access_token):
     try:
-        response = requests.get(full_mr_url, headers={'PRIVATE-TOKEN': gitlab_access_token})
-        response_json_format = json.loads(response.text)
-        response_status=response_json_format['blocking_discussions_resolved']
-        if response_status:
-            return "success"
-        else:
-            return "failed"
+        url = "{}/merge".format(full_mr_url)
+        headers = {'PRIVATE-TOKEN': gitlab_access_token}
+        requests.put(url, headers=headers)
+        return "success"
     except:
         return "failed"

@@ -1,0 +1,22 @@
+{{- if or .Values.ingress.gcp.enabled }}
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: {{ .Values.ingress.gcp.host }}-https
+spec:
+  domains:
+    - {{ .Values.ingress.gcp.host }}.{{ .Values.ingress.gcp.domain }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.gcp.host }}-ingress
+  annotations:
+    networking.gke.io/managed-certificates: {{ .Values.ingress.gcp.host }}-https
+spec:
+  defaultBackend:
+    service:
+      name: version-bump
+      port:
+        number: 5000
+{{- end }}

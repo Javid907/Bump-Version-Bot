@@ -1,4 +1,7 @@
 token: your_bot_token
-bot_username: your_bot_username
+username: your_bot_username
 hosting: github #you must choose `github` or `gitlab`
 host: gitlab.com # it needs only if you choose gitlab in hosting
+email: your_bot_username@example.com
+changelog_begin: "BEGIN CHANGELOG" #if you will not add any key bot will use all description
+changelog_end: "END CHANGELOG" #if you will not add any key bot will use all description

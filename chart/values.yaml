@@ -1,7 +1,25 @@
-myConfig: |
-  github_token: bot_token
-  bot_username: bot_username
-  merge_function: True
-  repository:
-    - test/repo1
-    - test/repo2
+myConfig:
+  token: your_bot_token
+  username: your_bot_username
+  hosting: github
+  host: gitlab.com
+  email: your_bot_email@example.com
+  changelog_begin: "BEGIN CHANGELOG"
+  changelog_end: "END CHANGELOG"
+
+app:
+  name: version-bump
+  replicas: 1
+  port: 5000
+  protocol: TCP
+  nodePort: 31500
+  image:
+    repository: javid907/bump-version-bot
+    tag: ""
+    pullPolicy: Always
+
+ingress:
+  gcp:
+    enabled: false
+    domain: example.com
+    host: bump-version-bot

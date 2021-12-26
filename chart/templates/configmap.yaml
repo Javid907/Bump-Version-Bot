@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: version-bump-configmap
+  name: {{ .Values.app.name }}-configmap
 data:
-  default.conf: |
-    {{ .Values.myConfig }}
+  config.yaml: |-
+{{ toYaml .Values.myConfig| indent 12 }}

@@ -1,12 +1,13 @@
 import setuptools
 import os
+import shutil
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="Bump-Version-Bot",
-    version="0.1.1",
+    version="0.4.2",
     author="Javid Rzayev",
     author_email="rz.cavid@gmail.com",
     description="Simple Python Bot for Automation Bump Version for Microservice",
@@ -28,3 +29,6 @@ try:
     print ("Successfully created the directory %s " % path)
 except OSError:
     print ("Creation of the directory %s failed" % path)
+
+templatePath = shutil.copy('config/template.yaml', path)
+configPath = shutil.copy('config/config.yaml', path)

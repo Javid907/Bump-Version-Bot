@@ -1,14 +1,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: version-bump
+  name: {{ .Values.app.name }}-svc
   labels:
-    app: version-bump
+    app: {{ .Values.app.name }}
 spec:
-  type: ClusterIP
+  externalTrafficPolicy: Cluster
   ports:
-    - port: 5000
-      name: version-bump
-      protocol: TCP
+  - name: {{ .Values.app.name }}
+    nodePort: {{ .Values.app.nodePort }}
+    port: {{ .Values.app.port }}
+    protocol: {{ .Values.app.protocol }}
+    targetPort: {{ .Values.app.port }}
   selector:
-    app: version-bump
+    app: {{ .Values.app.name }}
+  sessionAffinity: None
+  type: LoadBalancer

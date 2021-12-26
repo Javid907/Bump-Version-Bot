@@ -1,0 +1,161 @@
+Elixir:
+  file_1:
+    name: "mix.exs"
+    syntax: "version"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_3:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+TypeScript:
+  file_1:
+    name: "package.json"
+    syntax: "version"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_3:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+Vue:
+  file_1:
+    name: "package.json"
+    syntax: "version"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_3:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+JavaScript:
+  file_1:
+    name: "package.json"
+    syntax: "version"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_3:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+Lua:
+  file_1:
+    name: "package.json"
+    syntax: "version"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+  file_3:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_4:
+    name: "Chart.yaml"
+    syntax: "appVersion:"
+  file_5:
+    name: "Chart.yaml"
+    syntax: "version:"
+Kotlin:
+  file_1:
+    name: "helm/Chart.yaml"
+    syntax: "appVersion:"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+  file_3:
+    name: "helm/Chart.yaml"
+    syntax: "version:"
+  file_4:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_5:
+    name: "build.gradle.kts"
+    syntax: "version ="
+Python:
+  file_1:
+    name: "helm/Chart.yaml"
+    syntax: "appVersion:"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+  file_3:
+    name: "helm/Chart.yaml"
+    syntax: "version:"
+  file_4:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_5:
+    name: "manage.py"
+    syntax: "version="
+  file_6:
+    name: "setup.py"
+    syntax: "version="
+Java:
+  file_1:
+    name: "helm/Chart.yaml"
+    syntax: "appVersion:"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+  file_3:
+    name: "helm/Chart.yaml"
+    syntax: "version:"
+  file_4:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_5:
+    name: "build.gradle"
+    syntax: "version ="
+Smarty:
+  file_1:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+  file_2:
+    name: ".gitlab-ci.yml"
+    syntax: "IMAGE_TAG="
+  file_3:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_4:
+    name: "Chart.yaml"
+    syntax: "appVersion:"
+  file_5:
+    name: "Chart.yaml"
+    syntax: "version:"
+  file_6:
+    name: ".gitlab-ci.yml"
+    syntax: "IMAGE_TAG:"
+  file_7:
+    name: "helm/Chart.yaml"
+    syntax: "version:"
+  file_8:
+    name: "helm/Chart.yaml"
+    syntax: "appVersion:"
+Dockerfile:
+  file_1:
+    name: ".gitlab-ci.yml"
+    syntax: "IMAGE_TAG"
+  file_2:
+    name: "chart/Chart.yaml"
+    syntax: "version:"
+  file_3:
+    name: "chart/Chart.yaml"
+    syntax: "appVersion:"
+  file_4:
+    name: "helm/Chart.yaml"
+    syntax: "version:"
+  file_5:
+    name: "helm/Chart.yaml"
+    syntax: "appVersion:"
+Other:
+  file_1:
+    name: "Chart.yaml"
+    syntax: "version:"
+  file_2:
+    name: "Chart.yaml"
+    syntax: "appVersion:"
+  file_3:
+    name: ".gitlab-ci.yml"
+    syntax: "IMAGE_TAG="
+  file_4:
+    name: ".gitlab-ci.yml"
+    syntax: "IMAGE_TAG:"
