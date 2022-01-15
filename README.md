@@ -1,4 +1,4 @@
-# Deprecated and move to https://github.com/Javid907/DevOps-Bot
+# Deprecated and moved to https://github.com/Javid907/DevOps-Bot
 
 # Version Bump
 Simple Python Bot to automate Version-Bumping of your VCS hosted Microservice
